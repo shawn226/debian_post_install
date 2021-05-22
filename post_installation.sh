@@ -2,6 +2,33 @@
 
 set -e
 
+###################
+## Les fonctions ##
+###################
+get_ip_valid(){
+  local error=1
+
+  while [[ $error = 1 ]]
+  do
+    read -p "Entrez une adresse IP (exemple 10.0.0.0): " ip_address
+
+    if [[ $ip_address =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+    then
+      error=0
+    else
+      echo "Veuillez choisir une adresse ip valide!" >&2 #On redirige vers la sortie d'erreur
+    fi
+  done
+
+  echo $ip_address
+}
+
+
+
+
+##############################
+## Installation des paquets ##
+##############################
 # On set la timezone pour être toujours à l'heure
 apt install ntp ntpdate -y
 timedatectl set-timezone Europe/Paris
@@ -25,7 +52,34 @@ apt install vim sudo curl rsync net-tools zip git htop dstat \
 
 apt clean -y
 
-# Modification de Grub
+#############################
+## Configuration du réseau ##
+#############################
+echo "----------------------------------------"
+echo "Configuration du réseau"
+echo "----------------------------------------"
+echo "Entrez l'IP de cette machine"
+addr=$(get_ip_valid)
+
+echo "Entrez la gateway"
+gateway=$(get_ip_valid)
+
+# On désactive le dhcp pour du static
+sed -i 's/iface ens33 inet dhcp/auto ens33\
+iface ens33 inet static/' /etc/network/interfaces
+
+# On ajoute notre ip statique avec la gateway
+echo "    address $addr/24
+    gateway $gateway" >> /etc/network/interfaces
+
+# On flush la carte reseau
+ip a flush ens33
+# On redémarre le service
+systemctl restart networking
+
+##########################
+## Modification de Grub ##
+##########################
 sed -i 's/quiet/vga=791/' /etc/default/grub
 sed -i 's/=5/=20/' /etc/default/grub
 sed -i '$a set superusers="grubroot"' /etc/grub.d/40_custom
@@ -38,6 +92,18 @@ sed -i '/HASH/s/HASH/$grub_mdp_hash/' /etc/grub.d/40_custom
 sed -i 's/--class os/--class os --unrestricted/g' /etc/grub.d/10_linux
 update-grub
 
+
+###########################
+## Modification hostname ##
+###########################
+hostnamectl set-hostname wiki
+echo wiki > /etc/hostname
+sed -i 's/debian/wiki.esgi.local wiki' /etc/hosts
+
+
+#################
+## Service SSH ##
+#################
 echo "----------------------------------------"
 echo "Création des clés SSH pour le compte root"
 echo "----------------------------------------"
@@ -81,16 +147,7 @@ echo "Banner /etc/issue.net" >> /etc/ssh/sshd_config
 systemctl restart sshd
 chmod -v 640 /etc/ssh/sshd_config
 
-# On désactive le dhcp pour du static
-sed -i 's/iface ens33 inet dhcp/auto ens33\
-iface ens33 inet static/' /etc/network/interfaces
 
-# On ajoute notre ip statique avec la gateway
-echo "    address 192.168.1.18/24 
-    gateway 192.168.1.1" >> /etc/network/interfaces
-
-# On redémarre le service
-systemctl restart networking
 
 
 ###########################################
@@ -118,15 +175,6 @@ chmod -v 600 /etc/security/pam_env.conf
 chmod -v 600 /etc/security/sepermit.conf
 chmod -v 600 /etc/security/time.conf
 
-# Tous les fichiers du /etc en lecture sont maintenant visible que par root
-
-#for FILE in /etc/*;
-#do
-#	if [[ $(stat -c "%a" $FILE) = "644" ]];
-#	then
-		# chmod -v 600 $FILE
-#	fi
-#done
 
 #################
 ## Secure apps ##
@@ -177,9 +225,6 @@ chsh -s $(which zsh)
 # On télécharge et installe oh-my-zsh
 echo "" |sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# On fait un scan sur la racine
-#clamscan -r /
-sleep 2
 
 
 
