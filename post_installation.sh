@@ -148,8 +148,15 @@ echo "Banner /etc/issue.net" >> /etc/ssh/sshd_config
 systemctl restart sshd
 chmod -v 640 /etc/ssh/sshd_config
 
+######################
+## Creation du MOTD ##
+######################
+# On supprime le fichier 10-uname
+rm /etc/update-motd.d/10-uname
 
-
+printf "\n"
+echo "#!/bin/bash\nfiglet \" \" $(hostname -s)" > /etc/update-motd.d/00-hostname
+printf "\n"
 
 ###########################################
 ## Configuration des droits des fichiers ##
@@ -158,13 +165,13 @@ chmod -v 640 /etc/ssh/sshd_config
 # Fichiers configuration hosts
 chmod -v 600 /etc/host*
 
-# Fichiers passwd
+#Fichiers passwd
 chmod -v 600 /etc/passwd*
 
 # Fichier qui contient les terminaux sur lesquels root peut se log
 chmod -v 600 /etc/securetty
 
-# Fichiers politique sécurité
+#Fichiers politique sécurité
 chmod -v 600 /etc/security/access.conf
 chmod -v 600 /etc/security/group.conf
 chmod -v 600 /etc/security/limits.conf
