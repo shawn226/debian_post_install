@@ -81,7 +81,7 @@ echo "Banner /etc/issue.net" >> /etc/ssh/sshd_config
 systemctl restart sshd
 chmod -v 640 /etc/ssh/sshd_config
 
-# On desactive le dhcp pour du static
+# On désactive le dhcp pour du static
 sed -i 's/iface ens33 inet dhcp/auto ens33\
 iface ens33 inet static/' /etc/network/interfaces
 
