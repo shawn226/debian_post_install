@@ -23,6 +23,23 @@ get_ip_valid(){
   echo $ip_address
 }
 
+get_pub_key(){
+  local error=1
+
+  while [[ $error = 1 ]]
+  do
+    read -p "Veuillez coller votre clé publique RSA : " pub_key
+
+    if [[ $pub_key =~ ^(ssh-rsa AAAA[0-9A-Za-z+/]+[=]{0,3}( [^@]+@[^@]+)?)$ ]]
+    then
+      error=0
+    else
+      echo "Veuillez entrer une clé publique valide!" >&2
+    fi
+  done
+
+  echo $pub_key
+}
 
 
 
@@ -52,6 +69,8 @@ apt install vim sudo curl rsync net-tools zip git htop dstat \
 
 apt clean -y
 
+
+
 #############################
 ## Configuration du réseau ##
 #############################
@@ -78,6 +97,8 @@ ip a flush $interface
 # On redémarre le service
 systemctl restart networking
 
+
+
 ##########################
 ## Modification de Grub ##
 ##########################
@@ -94,12 +115,14 @@ sed -i 's/--class os/--class os --unrestricted/g' /etc/grub.d/10_linux
 update-grub
 
 
+
 ###########################
 ## Modification hostname ##
 ###########################
 hostnamectl set-hostname wiki
 echo wiki > /etc/hostname
 sed -i 's/debian/wiki.esgi.local wiki' /etc/hosts
+
 
 
 #################
@@ -142,11 +165,8 @@ echo "done!"
 # On définit vim comme editor principal
 ln -sfvn /usr/bin/vim.basic /etc/alternatives/editor
 
-# On modifie le sshd config
-echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-echo "Banner /etc/issue.net" >> /etc/ssh/sshd_config
-systemctl restart sshd
-chmod -v 640 /etc/ssh/sshd_config
+
+
 
 ######################
 ## Creation du MOTD ##
@@ -156,15 +176,15 @@ chmod -v 640 /etc/ssh/sshd_config
 rm /etc/update-motd.d/10-uname
 
 # Création du fichier de couleurs
-echo "NONE=\"\033[m\"
-WHITE=\"\033[1;37m\"
-GREEN=\"\033[1;32m\"
-RED=\"\033[0;32;31m\"
-YELLOW=\"\033[1;33m\"
-BLUE=\"\033[34m\"
-CYAN=\"\033[36m\"
-LIGHT_GREEN=\"\033[1;32m\"
-LIGHT_RED=\"\033[1;31m\"" > /etc/update-motd.d/colors
+echo "NONE=\"\\033[m\"
+WHITE=\"\\033[1;37m\"
+GREEN=\"\\033[1;32m\"
+RED=\"\\033[0;32;31m\"
+YELLOW=\"\\033[1;33m\"
+BLUE=\"\\033[34m\"
+CYAN=\"\\033[36m\"
+LIGHT_GREEN=\"\\033[1;32m\"
+LIGHT_RED=\"\\033[1;31m\"" > /etc/update-motd.d/colors
 
 echo "#!/bin/bash
 printf \"\n\"
@@ -214,12 +234,13 @@ printf \"  Uptime : \$uptime\"
 printf \"\n\"
 printf \"\\n\"" > /etc/update-motd.d/20-sysinfo
 
+# On rend les fichiers executables
 chmod 755 /etc/update-motd.d/00-hostname
 chmod 755 /etc/update-motd.d/10-banner
 chmod 755 /etc/update-motd.d/20-sysinfo
 
+# On supprime le motd actuel
 rm /etc/motd
-
 ln -s /var/run/motd /etc/motd
 
 
@@ -249,6 +270,24 @@ chmod -v 600 /etc/security/pam_env.conf
 chmod -v 600 /etc/security/sepermit.conf
 chmod -v 600 /etc/security/time.conf
 
+
+
+##########################
+## Unlock LUKS remotely ##
+##########################
+apt install -y dropbear-initramfs
+
+sed -i "s/#DROPBEAR_OPTIONS=/DROPBEAR_OPTIONS=\"-I 180 -j -k -p 2222 -s\"/" /etc/dropbear-initramfs/config
+
+echo "IP=$addr::$gateway:255.255.255.0:wiki" >> /etc/initramfs-tools/initramfs.conf
+
+update-initramfs -u -v
+
+user_pub_key=$(get_pub_key)
+
+echo $user_pub_key > /etc/dropbear-initramfs/authorized_keys
+
+update-initramfs -u
 
 #################
 ## Secure apps ##
@@ -298,6 +337,12 @@ chsh -s $(which zsh)
 
 # On télécharge et installe oh-my-zsh
 echo "" |sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# On modifie le sshd config
+echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+echo "Banner /etc/issue.net" >> /etc/ssh/sshd_config
+systemctl restart sshd
+chmod -v 640 /etc/ssh/sshd_config
 
 
 
