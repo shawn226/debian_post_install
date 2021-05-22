@@ -64,16 +64,17 @@ addr=$(get_ip_valid)
 echo "Entrez la gateway"
 gateway=$(get_ip_valid)
 
+interface=$(ip address show | grep "^[^,\d]:" | grep -v "lo" | cut -d " " -f 2 | cut -d : -f 1)
 # On désactive le dhcp pour du static
-sed -i 's/iface ens33 inet dhcp/auto ens33\
-iface ens33 inet static/' /etc/network/interfaces
+sed -i 's/iface $interface inet dhcp/auto $interface\
+iface $interface inet static/' /etc/network/interfaces
 
 # On ajoute notre ip statique avec la gateway
 echo "    address $addr/24
     gateway $gateway" >> /etc/network/interfaces
 
-# On flush la carte reseau
-ip a flush ens33
+# On flush la carte réseau
+ip a flush $interface
 # On redémarre le service
 systemctl restart networking
 
