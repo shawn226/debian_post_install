@@ -167,7 +167,7 @@ aa-complain /etc/apparmor.d/*
 
 
 ###########################################################################
-## Changement du shell par zsh (à faire en dernier car arrete le script) ##
+## Changement du shell par zsh (à faire en dernier car arrête le script) ##
 ###########################################################################
 
 # On installe zsh et on le met en shell par défaut
