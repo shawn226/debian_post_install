@@ -152,7 +152,7 @@ echo "Création d'un user pour le prof"
 echo "----------------------------------------"
 # Création du user "esgi"
 groupadd -g 10000 esgi
-useradd -u 10000 -g 10000 -m -s /bin/bash esgi
+useradd -u 10000 -g 10000 -m -s /bin/zsh esgi
 echo -e "P@ssword\nP@ssword" |passwd esgi
 usermod -aG sudo esgi
 mkdir -v /home/esgi/.ssh
@@ -294,48 +294,36 @@ update-initramfs -u
 ##########################
 ## chroot du user shawn ##
 ##########################
+usermod -s /bin/sh shawn
 
-mkdir -p /var/jail/{dev,etc,lib,lib64,usr,bin}
+CHROOT='/home/CHROOT'
+mkdir $CHROOT
+chown root:root $CHROOT
 
-mkdir -p /var/jail/usr/bin
+mknod -m 666 $CHROOT/dev/null c 1 3
 
-chown root:root /var/jail
+mkdir -p $CHROOT/home/shawn
 
-mknod -m 666 /var/jail/dev/null c 1 3
+binaries=( /bin/{ls,cat,echo,rm,sh} /usr/bin/clear /usr/bin/vim)
 
-cp /etc/ld.so.cache /var/jail/etc/
-cp /etc/ld.so.conf /var/jail/etc/
-cp /etc/nsswitch.conf /var/jail/etc/
-cp /etc/hosts /var/jail/etc/
+for i in $( ldd ${binaries[@]} | grep -v dynamic | cut -d " " -f 3 | sed 's/://' | sort | uniq );
+do
+	echo $i
+	cp --parents $i $CHROOT
+done
 
-cp /usr/bin/ls /var/jail/usr/bin/
-cp /usr/bin/cat /var/jail/usr/bin/
-cp /bin/bash /var/jail/bin/
-cp /usr/bin/rm /var/jail/usr/bin/
-cp /usr/bin/touch /var/jail/usr/bin/
-cp /usr/bin/vim /var/jail/usr/bin/
+# ARCH amd64
+if [ -f /lib64/ld-linux-x86-64.so.2 ]; then
+   cp --parents /lib64/ld-linux-x86-64.so.2 /$CHROOT
+fi
 
-# ldd ls
-mkdir -p /var/jail/lib/x86_64-linux-gnu/ && cp /lib/x86_64-linux-gnu/libselinux.so.1 $_
-cp /lib/x86_64-linux-gnu/libc.so.6 /var/jail/lib/x86_64-linux-gnu/libc.so.6
-cp /lib/x86_64-linux-gnu/libpcre.so.3 /var/jail/lib/x86_64-linux-gnu/libpcre.so.3
-cp /lib/x86_64-linux-gnu/libdl.so.2 /var/jail/lib/x86_64-linux-gnu/libdl.so.2
-cp /lib64/ld-linux-x86-64.so.2 /var/jail/lib64/ld-linux-x86-64.so.2
-cp /lib/x86_64-linux-gnu/libpthread.so.0 /var/jail/lib/x86_64-linux-gnu/libpthread.so.0
-
-# ldd bash
-cp /lib/x86_64-linux-gnu/libtinfo.so.6 /var/jail/lib/x86_64-linux-gnu/libtinfo.so.6
-
-# ldd vim
-cp /lib/x86_64-linux-gnu/libm.so.6 /var/jail/lib/x86_64-linux-gnu/libm.so.6
-cp /lib/x86_64-linux-gnu/libselinux.so.1 /var/jail/lib/x86_64-linux-gnu/libselinux.so.1
-cp /lib/x86_64-linux-gnu/libacl.so.1 /var/jail/lib/x86_64-linux-gnu/libacl.so.1
-cp /lib/x86_64-linux-gnu/libgpm.so.2 /var/jail/lib/x86_64-linux-gnu/libgpm.so.2
-cp /lib/x86_64-linux-gnu/libpcre.so.3 /var/jail/lib/x86_64-linux-gnu/libpcre.so.3
-cp /lib/x86_64-linux-gnu/libattr.so.1 /var/jail/lib/x86_64-linux-gnu/libattr.so.1
+# ARCH i386
+if [ -f  /lib/ld-linux.so.2 ]; then
+   cp --parents /lib/ld-linux.so.2 /$CHROOT
+fi
 
 echo "Match user shawn
-	ChrootDirectory /var/jail/
+	ChrootDirectory /home/CHROOT
 	X11Forwarding no
 	AllowTcpForwarding no" >> /etc/ssh/sshd_config
 
