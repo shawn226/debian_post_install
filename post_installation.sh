@@ -289,6 +289,69 @@ echo $user_pub_key > /etc/dropbear-initramfs/authorized_keys
 
 update-initramfs -u
 
+
+
+##########################
+## chroot du user shawn ##
+##########################
+
+mkdir -p /var/jail/{dev,etc,lib,lib64,usr,bin}
+
+mkdir -p /var/jail/usr/bin
+
+chown root:root /var/jail
+
+mknod -m 666 /var/jail/dev/null c 1 3
+
+cp /etc/ld.so.cache /var/jail/etc/
+cp /etc/ld.so.conf /var/jail/etc/
+cp /etc/nsswitch.conf /var/jail/etc/
+cp /etc/hosts /var/jail/etc/
+
+cp /usr/bin/ls /var/jail/usr/bin/
+cp /usr/bin/cat /var/jail/usr/bin/
+cp /bin/bash /var/jail/bin/
+cp /usr/bin/rm /var/jail/usr/bin/
+cp /usr/bin/touch /var/jail/usr/bin/
+cp /usr/bin/vim /var/jail/usr/bin/
+
+# ldd ls
+mkdir -p /var/jail/lib/x86_64-linux-gnu/ && cp /lib/x86_64-linux-gnu/libselinux.so.1 $_
+cp /lib/x86_64-linux-gnu/libc.so.6 /var/jail/lib/x86_64-linux-gnu/libc.so.6
+cp /lib/x86_64-linux-gnu/libpcre.so.3 /var/jail/lib/x86_64-linux-gnu/libpcre.so.3
+cp /lib/x86_64-linux-gnu/libdl.so.2 /var/jail/lib/x86_64-linux-gnu/libdl.so.2
+cp /lib64/ld-linux-x86-64.so.2 /var/jail/lib64/ld-linux-x86-64.so.2
+cp /lib/x86_64-linux-gnu/libpthread.so.0 /var/jail/lib/x86_64-linux-gnu/libpthread.so.0
+
+# ldd bash
+cp /lib/x86_64-linux-gnu/libtinfo.so.6 /var/jail/lib/x86_64-linux-gnu/libtinfo.so.6
+
+# ldd vim
+cp /lib/x86_64-linux-gnu/libm.so.6 /var/jail/lib/x86_64-linux-gnu/libm.so.6
+cp /lib/x86_64-linux-gnu/libselinux.so.1 /var/jail/lib/x86_64-linux-gnu/libselinux.so.1
+cp /lib/x86_64-linux-gnu/libacl.so.1 /var/jail/lib/x86_64-linux-gnu/libacl.so.1
+cp /lib/x86_64-linux-gnu/libgpm.so.2 /var/jail/lib/x86_64-linux-gnu/libgpm.so.2
+cp /lib/x86_64-linux-gnu/libpcre.so.3 /var/jail/lib/x86_64-linux-gnu/libpcre.so.3
+cp /lib/x86_64-linux-gnu/libattr.so.1 /var/jail/lib/x86_64-linux-gnu/libattr.so.1
+
+echo "Match user shawn
+	ChrootDirectory /var/jail/
+	X11Forwarding no
+	AllowTcpForwarding no" >> /etc/ssh/sshd_config
+
+
+
+#############################
+## cryptsetup du lv coffre ##
+#############################
+cryptsetup -q -v -s 512 -c aes-xts-plain64 -h sha512 luksFormat /dev/VGCRYPT/lv_coffre
+
+cryptsetup luksOpen /dev/VGCRYPT/lv_coffre lv_coffrecrypt
+
+mkfs.xfs /dev/mapper/lv_coffrecrypt
+
+mount /dev/mapper/lv_coffrecrypt /home/COFFRE
+
 #################
 ## Secure apps ##
 #################
