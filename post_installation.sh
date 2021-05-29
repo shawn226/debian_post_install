@@ -65,7 +65,7 @@ apt install vim sudo curl rsync net-tools zip git htop dstat \
 	    pigz pixz psmisc clamav tree lynx sshfs tmux screen \
 	    mlocate at jq hddtemp lshw inxi figlet \
 	    gdisk mc cifs-utils ntfs-3g iptraf psmisc wajig \
-	    iotop gnupg dnsutils grc ncdu p7zip-full -y
+	    iotop pv gnupg dnsutils grc ncdu p7zip-full -y
 
 apt clean -y
 
@@ -327,18 +327,31 @@ echo "Match user shawn
 	X11Forwarding no
 	AllowTcpForwarding no" >> /etc/ssh/sshd_config
 
-
-
 #############################
 ## cryptsetup du lv coffre ##
 #############################
-cryptsetup -q -v -s 512 -c aes-xts-plain64 -h sha512 luksFormat /dev/VGCRYPT/lv_coffre
+umount /dev/VGCRYPT/lv_coffre
+cryptsetup -q -v -s 512 -c aes-xts-plain64 -h sha512 --type luks2 luksFormat /dev/VGCRYPT/lv_coffre
 
 cryptsetup luksOpen /dev/VGCRYPT/lv_coffre lv_coffrecrypt
+
+pv -tpreb /dev/zero | dd of=/dev/VGCRYPT/lv_coffre bs=128M
 
 mkfs.xfs /dev/mapper/lv_coffrecrypt
 
 mount /dev/mapper/lv_coffrecrypt /home/COFFRE
+
+sed -i '/\/dev\/mapper\/VGCRYPT-lv_coffre/d' /etc/fstab
+
+########################
+## création du coffre ##
+########################
+
+mkdir /home/COFFRE
+cd /home/COFFRE
+mkdir CERTIFICAT ENVIRONNEMENT ENVIRONNEMENT/bash ENVIRONNEMENT/ksh ENVIRONNEMENT/zsh SECURITE SECURITE/fai2ban SECURITE/firewall SECURITE/supervision SERVEUR SERVEUR/apache SERVEUR/apache/CENTOS8 SERVEUR/apache/DEBIAN10 SERVEUR/bind SERVEUR/nginx SERVEUR/rsyslog SERVEUR/ssh
+
+
 
 #################
 ## Secure apps ##
