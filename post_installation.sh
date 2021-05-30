@@ -85,8 +85,7 @@ gateway=$(get_ip_valid)
 
 interface=$(ip address show | grep "^[^,\d]:" | grep -v "lo" | cut -d " " -f 2 | cut -d : -f 1)
 # On désactive le dhcp pour du static
-sed -i 's/iface $interface inet dhcp/auto $interface\
-iface $interface inet static/' /etc/network/interfaces
+sed -i "s/iface $interface inet dhcp/auto $interface\niface $interface inet static/" /etc/network/interfaces
 
 # On ajoute notre ip statique avec la gateway
 echo "    address $addr/24
@@ -102,16 +101,18 @@ systemctl restart networking
 ##########################
 ## Modification de Grub ##
 ##########################
-sed -i 's/quiet/vga=791/' /etc/default/grub
-sed -i 's/=5/=20/' /etc/default/grub
-sed -i '$a set superusers="grubroot"' /etc/grub.d/40_custom
 
-grub_mdp_hash='echo -e "root\root"| grub-mkpassword-pbkdf2| tail -1| cut -d " " -f9'
+sed -i '$a set superusers="grubroot"' /etc/grub.d/40_custom
+grub_mdp_hash='echo -e "root\nroot"| grub-mkpassword-pbkdf2| tail -1| cut -d " " -f9'
 
 sed -i '$a password_pbkdf2 grub HASH' /etc/grub.d/40_custom
 sed -i '/HASH/s/HASH/$grub_mdp_hash/' /etc/grub.d/40_custom
 
 sed -i 's/--class os/--class os --unrestricted/g' /etc/grub.d/10_linux
+
+sed -i 's/quiet/vga=791/' /etc/default/grub
+sed -i 's/=5/=20/' /etc/default/grub
+
 update-grub
 
 
