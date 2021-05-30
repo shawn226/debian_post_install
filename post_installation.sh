@@ -374,6 +374,8 @@ EOF
 ## Bookstack ##
 ###############
 
+apt install nginx php-fpm lynx net-tools php-tokenizer php-gd php-mysql php-xml mariadbserver -y | tee -a install.bookstack.log
+
 mysql -e "DELETE FROM mysql.user WHERE User='';"
 mysql -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
 
