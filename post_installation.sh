@@ -352,6 +352,110 @@ cd /home/COFFRE
 mkdir CERTIFICAT ENVIRONNEMENT ENVIRONNEMENT/bash ENVIRONNEMENT/ksh ENVIRONNEMENT/zsh SECURITE SECURITE/fai2ban SECURITE/firewall SECURITE/supervision SERVEUR SERVEUR/apache SERVEUR/apache/CENTOS8 SERVEUR/apache/DEBIAN10 SERVEUR/bind SERVEUR/nginx SERVEUR/rsyslog SERVEUR/ssh
 
 
+###########################
+## installation de cheat ##
+###########################
+wget https://github.com/cheat/cheat/release/download/4.2.1/cheat-linux-amd64.gz
+
+gunzip cheat-linux-amd64.gz
+chmod +x cheat-linux-amd64
+yes | ./cheat-linux-amd64
+
+su shawn << EOF
+yes | cheat
+EOF
+
+su esgi << EOF
+yes | cheat
+EOF
+
+
+###############
+## Bookstack ##
+###############
+
+mysql -e "DELETE FROM mysql.user WHERE User='';"
+mysql -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+
+mysql -e "FLUSH PRIVILEGES"
+
+mysql --execute="
+CREATE DATABASE IF NOT EXISTS bookstackdb DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+GRANT ALL PRIVILEGES ON bookstackdb.* TO 'bookstackuser'@'localhost' IDENTIFIED BY 'P@ssword' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+quit"
+
+mysql -e "SET PASSWORD FOR root@localhost = PASSWORD('P@ssword');FLUSH PRIVILEGES;"
+
+systemctl enable mariadb
+
+systemctl enable nginx
+
+cat << '_EOF_' > /etc/nginx/sites-available/bookstack.conf
+server {
+  listen 80;
+  listen [::]:80;
+
+  server_name wiki.esgi.local;
+
+  root /var/www/bookstack/public;
+
+  index index.php index.html;
+
+  location / {
+    try_files $uri $uri/ /index.php?$query_string;
+  }
+
+  location ~ \.php$ {
+    fastcgi_index index.php;
+    try_files $uri =404;
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php7.3-fpm.sock;
+  }
+}
+_EOF_
+
+
+
+ln -s /etc/nginx/sites-available/bookstack.conf /etc/nginx/sites-enabled/
+
+nginx -t
+
+systemctl reload nginx.service
+systemctl restart php7.3-fpm.service
+
+
+echo "Install Bookstack";echo;sleep 3
+
+wget -O composer-setup.php https://getcomposer.org/installer
+
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+
+
+cd /home/shawn
+git clone https://github.com/BookStackApp/BookStack.git --branch release --single-branch
+
+cd BookStack
+
+echo "\n" |composer install --no-dev
+
+mv /home/shawn/BookStack /var/www/bookstack
+cd /var/www/bookstack
+chmod -R 755 bootstrap/cache public/uploads storage
+
+cp .env.example .env
+
+sed -i.bak 's/APP_URL=.*$/APP_URL=wiki.esgi.local/' .env
+sed -i.bak 's/DB_DATABASE=.*$/DB_DATABASE=bookstackdb/' .env
+sed -i.bak 's/DB_USERNAME=.*$/DB_USERNAME=bookstackuser/' .env
+sed -i.bak "s/DB_PASSWORD=.*\$/DB_PASSWORD=P@ssword/" .env
+
+php artisan key:generate --force
+
+php artisan migrate --force
+
+chown -R www-data:www-data /var/www/bookstack
 
 #################
 ## Secure apps ##
