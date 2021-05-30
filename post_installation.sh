@@ -356,7 +356,7 @@ mkdir CERTIFICAT ENVIRONNEMENT ENVIRONNEMENT/bash ENVIRONNEMENT/ksh ENVIRONNEMEN
 ###########################
 ## installation de cheat ##
 ###########################
-wget https://github.com/cheat/cheat/release/download/4.2.1/cheat-linux-amd64.gz
+wget https://github.com/cheat/cheat/releases/download/4.2.1/cheat-linux-amd64.gz
 
 gunzip cheat-linux-amd64.gz
 chmod +x cheat-linux-amd64
