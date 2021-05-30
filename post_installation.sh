@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+#set -e
 
 ###################
 ## Les fonctions ##
@@ -333,6 +333,8 @@ echo "Match user shawn
 #############################
 ## cryptsetup du lv coffre ##
 #############################
+mkdir /home/COFFRE
+
 umount /dev/VGCRYPT/lv_coffre
 cryptsetup -q -v -s 512 -c aes-xts-plain64 -h sha512 --type luks2 luksFormat /dev/VGCRYPT/lv_coffre
 
@@ -350,7 +352,6 @@ sed -i '/\/dev\/mapper\/VGCRYPT-lv_coffre/d' /etc/fstab
 ## création du coffre ##
 ########################
 
-mkdir /home/COFFRE
 cd /home/COFFRE
 mkdir CERTIFICAT ENVIRONNEMENT ENVIRONNEMENT/bash ENVIRONNEMENT/ksh ENVIRONNEMENT/zsh SECURITE SECURITE/fai2ban SECURITE/firewall SECURITE/supervision SERVEUR SERVEUR/apache SERVEUR/apache/CENTOS8 SERVEUR/apache/DEBIAN10 SERVEUR/bind SERVEUR/nginx SERVEUR/rsyslog SERVEUR/ssh
 
@@ -358,6 +359,10 @@ mkdir CERTIFICAT ENVIRONNEMENT ENVIRONNEMENT/bash ENVIRONNEMENT/ksh ENVIRONNEMEN
 ###########################
 ## installation de cheat ##
 ###########################
+# On installe zsh et on le met en shell par défaut
+apt install zsh -y
+chsh -s $(which zsh)
+
 wget https://github.com/cheat/cheat/releases/download/4.2.1/cheat-linux-amd64.gz
 
 gunzip cheat-linux-amd64.gz
@@ -365,14 +370,14 @@ chmod +x cheat-linux-amd64
 
 mv cheat-linux-amd64 /bin/cheat
 
-echo "yes" | cheat
+yes | cheat
 
 su shawn << EOF
-echo "yes" | cheat
+yes | cheat
 EOF
 
 su esgi << EOF
-echo "yes" | cheat
+yes | cheat
 EOF
 
 
@@ -499,9 +504,7 @@ aa-complain /etc/apparmor.d/*
 ## Changement du shell par zsh (à faire en dernier car arrête le script) ##
 ###########################################################################
 
-# On installe zsh et on le met en shell par défaut
-apt install zsh -y
-chsh -s $(which zsh)
+
 
 # On télécharge et installe oh-my-zsh
 echo "" |sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
