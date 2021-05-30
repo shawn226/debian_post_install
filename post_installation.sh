@@ -377,7 +377,7 @@ EOF
 ## Bookstack ##
 ###############
 
-apt install nginx php-fpm lynx net-tools php-tokenizer php-gd php-mysql php-xml mariadbserver -y | tee -a install.bookstack.log
+apt install nginx php-fpm lynx net-tools php-tokenizer php-gd php-mysql php-xml mariadb-server php-curl composer -y | tee -a install.bookstack.log
 
 mysql -e "DELETE FROM mysql.user WHERE User='';"
 mysql -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
@@ -429,14 +429,6 @@ nginx -t
 
 systemctl reload nginx.service
 systemctl restart php7.3-fpm.service
-
-
-echo "Install Bookstack";echo;sleep 3
-
-wget -O composer-setup.php https://getcomposer.org/installer
-
-php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-
 
 cd /home/shawn
 git clone https://github.com/BookStackApp/BookStack.git --branch release --single-branch
