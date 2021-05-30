@@ -362,14 +362,17 @@ wget https://github.com/cheat/cheat/releases/download/4.2.1/cheat-linux-amd64.gz
 
 gunzip cheat-linux-amd64.gz
 chmod +x cheat-linux-amd64
-yes | ./cheat-linux-amd64
+
+mv cheat-linux-amd64 /bin/cheat
+
+echo "yes" | cheat
 
 su shawn << EOF
-yes | cheat
+echo "yes" | cheat
 EOF
 
 su esgi << EOF
-yes | cheat
+echo "yes" | cheat
 EOF
 
 
