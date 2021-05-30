@@ -122,7 +122,7 @@ update-grub
 ###########################
 hostnamectl set-hostname wiki
 echo wiki > /etc/hostname
-sed -i 's/debian/wiki.esgi.local wiki' /etc/hosts
+sed -i 's/debian/wiki.esgi.local wiki/' /etc/hosts
 
 
 
