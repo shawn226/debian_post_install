@@ -340,7 +340,7 @@ cryptsetup -q -v -s 512 -c aes-xts-plain64 -h sha512 --type luks2 luksFormat /de
 
 cryptsetup luksOpen /dev/VGCRYPT/lv_coffre lv_coffrecrypt
 
-pv -tpreb /dev/zero | dd of=/dev/VGCRYPT/lv_coffre bs=128M
+# pv -tpreb /dev/zero | dd of=/dev/VGCRYPT/lv_coffre bs=128M
 
 mkfs.xfs /dev/mapper/lv_coffrecrypt
 
