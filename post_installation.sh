@@ -301,6 +301,8 @@ CHROOT='/home/CHROOT'
 mkdir $CHROOT
 chown root:root $CHROOT
 
+mkdir $CHROOT/dev
+
 mknod -m 666 $CHROOT/dev/null c 1 3
 
 mkdir -p $CHROOT/home/shawn
